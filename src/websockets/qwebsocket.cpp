@@ -270,7 +270,11 @@ not been filled in with new information when the signal returns.
     \sa ping()
   */
 #include "qwebsocket.h"
+#ifndef Q_OS_HTML5
 #include "qwebsocket_p.h"
+#else
+#include "qwebsocket_wasm_p.h"
+#endif
 
 #include <QtCore/QUrl>
 #include <QtNetwork/QTcpSocket>
@@ -342,6 +346,7 @@ QWebSocket::QWebSocket(QTcpSocket *pTcpSocket,
                        QWebSocketProtocol::Version version, QObject *parent) :
     QObject(*(new QWebSocketPrivate(pTcpSocket, version, this)), parent)
 {
+    qDebug() << Q_FUNC_INFO;
     Q_D(QWebSocket);
     d->init();
 }
@@ -381,6 +386,7 @@ bool QWebSocket::flush()
  */
 qint64 QWebSocket::sendTextMessage(const QString &message)
 {
+    qDebug() << Q_FUNC_INFO << message;
     Q_D(QWebSocket);
     return d->sendTextMessage(message);
 }
@@ -393,6 +399,7 @@ qint64 QWebSocket::sendTextMessage(const QString &message)
  */
 qint64 QWebSocket::sendBinaryMessage(const QByteArray &data)
 {
+    qDebug() << Q_FUNC_INFO << data;
     Q_D(QWebSocket);
     return d->sendBinaryMessage(data);
 }
@@ -406,6 +413,8 @@ qint64 QWebSocket::sendBinaryMessage(const QByteArray &data)
  */
 void QWebSocket::close(QWebSocketProtocol::CloseCode closeCode, const QString &reason)
 {
+
+    qDebug() << Q_FUNC_INFO;
     Q_D(QWebSocket);
     d->close(closeCode, reason);
 }
@@ -433,6 +442,7 @@ void QWebSocket::open(const QUrl &url)
  */
 void QWebSocket::open(const QNetworkRequest &request)
 {
+    qDebug() << Q_FUNC_INFO;
     Q_D(QWebSocket);
     d->open(request, true);
 }
@@ -662,6 +672,7 @@ quint16 QWebSocket::peerPort() const
     return d->peerPort();
 }
 
+#ifndef Q_OS_HTML5
 #ifndef QT_NO_NETWORKPROXY
 /*!
     Returns the currently configured proxy
@@ -681,7 +692,7 @@ void QWebSocket::setProxy(const QNetworkProxy &networkProxy)
     d->setProxy(networkProxy);
 }
 #endif
-
+#endif
 /*!
     Sets the generator to use for creating masks to \a maskGenerator.
     The default QWebSocket generator can be reset by supplying a \e nullptr.
