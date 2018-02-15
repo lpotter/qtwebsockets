@@ -49,6 +49,7 @@
 ****************************************************************************/
 #include "echoclient.h"
 #include <QtCore/QDebug>
+#include <QTimer>
 
 QT_USE_NAMESPACE
 
@@ -58,30 +59,59 @@ EchoClient::EchoClient(const QUrl &url, bool debug, QObject *parent) :
     m_url(url),
     m_debug(debug)
 {
-    if (m_debug)
-        qDebug() << "WebSocket server:" << url;
+ //   if (m_debug)
+   qDebug() << "WebSocket server:" << url;
     connect(&m_webSocket, &QWebSocket::connected, this, &EchoClient::onConnected);
     connect(&m_webSocket, &QWebSocket::disconnected, this, &EchoClient::closed);
+    connect(&m_webSocket, &QWebSocket::pong, this, &EchoClient::pongReceived);
+
     m_webSocket.open(QUrl(url));
+    timer = new QTimer();
+    connect(timer, SIGNAL(timeout()),
+            this,SLOT(sendPing()));
+    timer->setInterval(500);
+    timer->start();
 }
 //! [constructor]
 
 //! [onConnected]
 void EchoClient::onConnected()
 {
-    if (m_debug)
+ //   if (m_debug)
         qDebug() << "WebSocket connected";
     connect(&m_webSocket, &QWebSocket::textMessageReceived,
             this, &EchoClient::onTextMessageReceived);
     m_webSocket.sendTextMessage(QStringLiteral("Hello, world!"));
+    sendPing();
 }
 //! [onConnected]
 
 //! [onTextMessageReceived]
 void EchoClient::onTextMessageReceived(QString message)
 {
-    if (m_debug)
-        qDebug() << "Message received:" << message;
-    m_webSocket.close();
+  //  if (m_debug)
+    qDebug() << "Message received:" << message;
 }
 //! [onTextMessageReceived]
+
+void EchoClient::sendPing()
+{
+    qDebug() << Q_FUNC_INFO;
+    QByteArray ba;// = new QByteArray();
+    ba.resize(5);
+    ba[0] = 0x3c;
+    ba[1] = 0xb8;
+    ba[2] = 0x64;
+    ba[3] = 0x18;
+    ba[4] = 0xca;
+    QByteArray bt = QByteArrayLiteral("A binary message");
+    qDebug() << Q_FUNC_INFO << ba;
+//    m_webSocket.ping(ba);
+    m_webSocket.sendBinaryMessage(ba);
+    m_webSocket.sendBinaryMessage(bt);
+}
+void EchoClient::pongReceived(quint64 elapsedTime, const QByteArray &payload)
+{
+
+    qDebug() << Q_FUNC_INFO << elapsedTime;
+}

@@ -52,6 +52,7 @@
 
 #include <QtCore/QObject>
 #include <QtWebSockets/QWebSocket>
+#include <QTimer>
 
 class EchoClient : public QObject
 {
@@ -65,11 +66,13 @@ Q_SIGNALS:
 private Q_SLOTS:
     void onConnected();
     void onTextMessageReceived(QString message);
-
+    void sendPing();
+void pongReceived(quint64 elapsedTime, const QByteArray &payload);
 private:
     QWebSocket m_webSocket;
     QUrl m_url;
     bool m_debug;
+       QTimer *timer;
 };
 
 #endif // ECHOCLIENT_H
