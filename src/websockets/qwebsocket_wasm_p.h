@@ -66,6 +66,7 @@ QT_BEGIN_NAMESPACE
 class QWebSocketHandshakeRequest;
 class QWebSocketHandshakeResponse;
 class QWebSocket;
+class QTcpSocket;
 class QMaskGenerator;
 
 struct QWebSocketConfiguration
@@ -86,8 +87,7 @@ class QWebSocketPrivate : public QObjectPrivate
 public:
     Q_DECLARE_PUBLIC(QWebSocket)
     explicit QWebSocketPrivate(const QString &origin,
-                               QWebSocketProtocol::Version version,
-                               QWebSocket * const pWebSocket);
+                               QWebSocketProtocol::Version version);
     virtual ~QWebSocketPrivate();
 
     void init();
@@ -128,8 +128,6 @@ public:
     void open(const QNetworkRequest &request, bool mask);
     void ping(const QByteArray &payload);
 
-    QWebSocket * const q_ptr;
-
     static void onOpenCallback(void *data);
     static void onCloseCallback(void *data, int);
     static void onErrorCallback(void *data, int);
@@ -143,8 +141,7 @@ public:
 
 private:
 
-    QWebSocketPrivate(QTcpSocket *pTcpSocket, QWebSocketProtocol::Version version,
-                      QWebSocket *pWebSocket);
+    QWebSocketPrivate(QTcpSocket *pTcpSocket, QWebSocketProtocol::Version version);
 
     void setVersion(QWebSocketProtocol::Version version);
     void setResourceName(const QString &resourceName);
@@ -175,6 +172,7 @@ private:
     quint32 generateMaskingKey() const;
     QByteArray generateKey() const;
 
+    QTcpSocket *m_pSocket;
     QString m_errorString;
     QWebSocketProtocol::Version m_version;
     QUrl m_resource;

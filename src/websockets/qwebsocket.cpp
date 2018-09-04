@@ -270,7 +270,7 @@ not been filled in with new information when the signal returns.
     \sa ping()
   */
 #include "qwebsocket.h"
-#ifndef Q_OS_HTML5
+#ifndef Q_OS_WASM
 #include "qwebsocket_p.h"
 #else
 #include "qwebsocket_wasm_p.h"
@@ -669,7 +669,7 @@ quint16 QWebSocket::peerPort() const
     return d->peerPort();
 }
 
-#ifndef Q_OS_HTML5
+#ifndef Q_OS_WASM
 #ifndef QT_NO_NETWORKPROXY
 /*!
     Returns the currently configured proxy

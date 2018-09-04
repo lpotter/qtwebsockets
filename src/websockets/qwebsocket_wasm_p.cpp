@@ -49,6 +49,7 @@
 #include <QtCore/QCryptographicHash>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QStringList>
+#include <QtNetwork/QTcpSocket>
 
 #include <QtCore/QStringBuilder>   //for more efficient string concatenation
 
@@ -82,10 +83,8 @@ QWebSocketConfiguration::QWebSocketConfiguration()
 /*!
     \internal
 */
-QWebSocketPrivate::QWebSocketPrivate(const QString &origin, QWebSocketProtocol::Version version,
-                                     QWebSocket *pWebSocket) :
+QWebSocketPrivate::QWebSocketPrivate(const QString &origin, QWebSocketProtocol::Version version) :
     QObjectPrivate(),
-    q_ptr(pWebSocket),
     m_errorString(),
     m_version(version),
     m_resourceName(),
@@ -114,10 +113,8 @@ QWebSocketPrivate::QWebSocketPrivate(const QString &origin, QWebSocketProtocol::
 /*!
     \internal
 */
-QWebSocketPrivate::QWebSocketPrivate(QTcpSocket *pTcpSocket, QWebSocketProtocol::Version version,
-                                     QWebSocket *pWebSocket) :
+QWebSocketPrivate::QWebSocketPrivate(QTcpSocket *pTcpSocket, QWebSocketProtocol::Version version) :
     QObjectPrivate(),
-    q_ptr(pWebSocket),
     m_errorString(),
     m_version(version),
     m_resourceName(),
@@ -224,12 +221,14 @@ qint64 QWebSocketPrivate::sendTextMessage(const QString &message)
 qint64 QWebSocketPrivate::sendBinaryMessage(const QByteArray &data)
 {
     m_messageArray = data;
+    qDebug() << Q_FUNC_INFO << data;
 
     EM_ASM_ARGS({
                     var array = Module.getBinaryMessage();
                     if (window.webSocker == undefined) {
                         console.log("cannot find websocket object");
                     } else {
+                        console.log("send binary data");
                         window.webSocker.binaryType = "arraybuffer";
                         window.webSocker.send(array);
                     }
@@ -299,9 +298,10 @@ void QWebSocketPrivate::close(QWebSocketProtocol::CloseCode closeCode, QString r
 void QWebSocketPrivate::onOpenCallback(void *data)
 {
     QWebSocketPrivate *handler = reinterpret_cast<QWebSocketPrivate*>(data);
+    qDebug() << Q_FUNC_INFO << handler;
     if (handler)
         handler->emitConnected();
-    QCoreApplication::processEvents();
+//    QCoreApplication::processEvents();
 }
 
 /*!
@@ -309,6 +309,7 @@ void QWebSocketPrivate::onOpenCallback(void *data)
  */
 void QWebSocketPrivate::emitConnected()
 {
+    qDebug() << Q_FUNC_INFO << __LINE__;
     Q_Q(QWebSocket);
     Q_EMIT q->connected();
     QCoreApplication::processEvents();
@@ -362,6 +363,7 @@ void QWebSocketPrivate::emitDisconnected()
  */
 void QWebSocketPrivate::onIncomingMessageCallback(void *data, int evt, int length, int dataType)
 {
+    qDebug() << Q_FUNC_INFO << __LINE__;
     QWebSocketPrivate *handler = reinterpret_cast<QWebSocketPrivate*>(data);
     if (handler) {
         if (dataType == 0) { //string
@@ -426,6 +428,7 @@ void QWebSocketPrivate::open(const QNetworkRequest &request, bool mask)
 
 void QWebSocketPrivate::jsRequest(const QString &url, const QByteArray &protocolHeader, void *openCallback, void *closeCallback, void *errorCallback, void *incomingMessageCallback)
 {
+    qDebug() << Q_FUNC_INFO << __LINE__;
     EM_ASM_ARGS({
                     var wsUri = Pointer_stringify($0);
                     var wsProtocol = Pointer_stringify($1);
@@ -440,6 +443,7 @@ void QWebSocketPrivate::jsRequest(const QString &url, const QByteArray &protocol
                             window.webSocker = {};
 
                             if (wsProtocol.length > 0) {
+                                console.log("wsProtocol " + wsProtocol);
                                 window.webSocker = new WebSocket(wsUri, wsProtocol);
                             } else {
                                 window.webSocker = new WebSocket(wsUri);
@@ -453,19 +457,23 @@ void QWebSocketPrivate::jsRequest(const QString &url, const QByteArray &protocol
                     }
 
                     function onOpen(evt) {
+                        console.log("onopen");
                         Runtime.dynCall('vi', onOpenCallbackPointer, [handler]);
                     }
 
                     function onClose(evt) {
+                        console.log("onClose");
                         window.webSocker = {};
                         Runtime.dynCall('vii', onCloseCallback, [handler, evt.code]);
                     }
 
                     function onError(evt) {
+                        console.log("onError");
                         Runtime.dynCall('vii', onErrorCallback, [handler, evt.error]);
                     }
 
                     function onMessage(evt) {
+                        console.log("onMessage");
 
                         var ptr;
                         var bufferLength = 0;
@@ -695,6 +703,7 @@ QByteArray QWebSocketPrivate::getFrameHeader(QWebSocketProtocol::OpCode opCode,
                                              quint64 payloadLength, quint32 maskingKey,
                                              bool lastFrame)
 {
+    Q_Q(QWebSocket);
     QByteArray header;
     bool ok = payloadLength <= 0x7FFFFFFFFFFFFFFFULL;
 
@@ -725,7 +734,7 @@ QByteArray QWebSocketPrivate::getFrameHeader(QWebSocketProtocol::OpCode opCode,
         }
     } else {
         setErrorString(QStringLiteral("WebSocket::getHeader: payload too big!"));
-        Q_EMIT q_ptr->error(QAbstractSocket::DatagramTooLargeError);
+        Q_EMIT q->error(QAbstractSocket::DatagramTooLargeError);
     }
 
     return header;

@@ -38,22 +38,22 @@ SOURCES += \
     $$PWD/qmaskgenerator.cpp \
     $$PWD/qdefaultmaskgenerator_p.cpp
 
-emscripten: {
+wasm: {
     SOURCES += \
-    $$PWD/qwebsocket_wasm_p.cpp
+        $$PWD/qwebsocket_wasm_p.cpp
     PRIVATE_HEADERS += \
-    $$PWD/qwebsocket_wasm_p.h
+        $$PWD/qwebsocket_wasm_p.h
  } else {
     SOURCES += \
-    $$PWD/qwebsocket_p.cpp
+        $$PWD/qwebsocket_p.cpp
     PRIVATE_HEADERS += \
-    $$PWD/qwebsocket_p.h
+        $$PWD/qwebsocket_p.h
 }
 
-qtConfig(ssl) {
-    SOURCES += $$PWD/qsslserver.cpp
-    PRIVATE_HEADERS += $$PWD/qsslserver_p.h
-}
+#qtConfig(ssl) {
+#    SOURCES += $$PWD/qsslserver.cpp
+#    PRIVATE_HEADERS += $$PWD/qsslserver_p.h
+#}
 
 HEADERS += $$PUBLIC_HEADERS $$PRIVATE_HEADERS
 

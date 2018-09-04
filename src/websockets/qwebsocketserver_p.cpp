@@ -46,7 +46,7 @@
 #include "qwebsockethandshakerequest_p.h"
 #include "qwebsockethandshakeresponse_p.h"
 #include "qwebsocket.h"
-#ifndef Q_OS_HTML5
+#ifndef Q_OS_WASM
 #include "qwebsocket_p.h"
 #else
 #include "qwebsocket_wasm_p.h"
